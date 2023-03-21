@@ -5,3 +5,7 @@ Idées de requêtes:
 - dernière position disponible du vol, avec/sans climat
 - historique des positions, avec/sans climat
 - climat infos simples vs détaillées
+- si entité n'existe pas, afficher un message d'erreur
+- somme des clients pour chaque entité qui ne passe pas par un climat tropical
+- noms des entités qui traversent un climat froid et dont le numero de vol est plus petit que 100
+- creer un trigger (par exemple: lorsqu'on met un jour un vol, il faut que le numero de vol commence par AC)
