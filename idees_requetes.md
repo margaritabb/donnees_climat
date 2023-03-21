@@ -1,6 +1,19 @@
 Idées de requêtes:
 - nombre d'entités suivies
-- associes chaque client avec une entité
+
+- associes chaque client avec une entité qui traversent un climat dont le windspeed est supérieur à 40
+  SELECT c.Nom, em.IdEntiteMobile
+  FROM Client c
+  INNER JOIN Adoption a ON c.IdClient = a.IdClient
+  INNER JOIN EntiteMobile em ON a.IdEntiteMobile = em.IdEntiteMobile
+  INNER JOIN Position p ON em.IdEntiteMobile = p.IdEntiteMobile
+  INNER JOIN Climat cl ON p.request_datetime = cl.request_datetime AND p.latitude = cl.latitude AND p.longidude = cl.longidude
+  WHERE cl.windspeed > 40
+  ORDER BY c.Nom, em.IdEntiteMobile;
+
+Cette requête utilise les jointures INNER JOIN pour récupérer les informations de toutes les tables nécessaires. Ensuite, nous avons ajouté la clause WHERE pour filtrer les résultats en fonction du windspeed. Enfin, nous avons trié les résultats par ordre croissant du client, puis par ordre croissant de l'entité mobile.
+
+  
 - moyenne température, autres stats descriptives (min, max, etc.)
 - dernière position disponible du vol, avec/sans climat
 - historique des positions, avec/sans climat
