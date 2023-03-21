@@ -1,5 +1,20 @@
 Idées de requêtes:
-- nombre d'entités suivies
+- Droit d'accès pour un client
+  SELECT
+    c.IdClient,
+    c.Nom,
+    c.DateAdoption,
+    CASE WHEN a.IdEntiteMobile IS NULL THEN 'Non' ELSE 'Oui' END AS "Droit d'accès"
+  FROM
+      Client c
+  LEFT JOIN
+      Adoption a ON c.IdClient = a.IdClient;
+
+- nombre d'entités suivies pour chaque client
+  SELECT c.Nom, COUNT(*) as Nombre_EntitesMobiles
+  FROM Client c
+  JOIN Adoption a ON c.IdClient = a.IdClient
+  GROUP BY c.Nom;
 
 - associes chaque client avec une entité qui traversent un climat dont le windspeed est supérieur à 40
   SELECT c.Nom, em.IdEntiteMobile
@@ -10,11 +25,15 @@ Idées de requêtes:
   INNER JOIN Climat cl ON p.request_datetime = cl.request_datetime AND p.latitude = cl.latitude AND p.longidude = cl.longidude
   WHERE cl.windspeed > 40
   ORDER BY c.Nom, em.IdEntiteMobile;
-
-Cette requête utilise les jointures INNER JOIN pour récupérer les informations de toutes les tables nécessaires. Ensuite, nous avons ajouté la clause WHERE pour filtrer les résultats en fonction du windspeed. Enfin, nous avons trié les résultats par ordre croissant du client, puis par ordre croissant de l'entité mobile.
-
   
 - moyenne température, autres stats descriptives (min, max, etc.)
+  SELECT AVG(pm.windspeed) AS avg_windspeed
+  FROM Position pm
+  INNER JOIN Climat cm ON pm.request_datetime = cm.request_datetime
+      AND pm.latitude = cm.latitude 
+      AND pm.longidude = cm.longidude
+  WHERE cm.windspeed < 10;
+  
 - dernière position disponible du vol, avec/sans climat
 - historique des positions, avec/sans climat
 - climat infos simples vs détaillées
