@@ -13,10 +13,11 @@ DROP TABLE if exists Position;
 -- Création des tables
 
 CREATE TABLE Client (
-	IdClient INT,
-	Nom VARCHAR(30),
-	DateAdoption DATE,
-	CONSTRAINT pkclient PRIMARY KEY (IdClient)
+	IdClient INT IDENTITY,
+	Nom VARCHAR(50),
+	TypeClient VARCHAR(30),
+	CONSTRAINT pkclient PRIMARY KEY (IdClient),
+    CONSTRAINT typeclient CHECK (TypeClient IN ('Corporation', 'Membre du public', 'Gouvernement'))
 );
 
 CREATE TABLE Climat (
@@ -447,3 +448,10 @@ INSERT INTO Position(flight_nbr, flight_time, latitude, longitude) VALUES
 ('AC357', 1679367043, 51.1312, -114.0124),
 ('AC323', 1679367042, 51.1291, -114.0092),
 ('AC694', 1679367045, 47.6139, -52.7432);
+
+INSERT INTO Client(Nom, TypeClient) VALUES
+('Air Canada', 'Corporation'),
+('Transport Canada', 'Gouvernement'),
+('Jeanne Tremblay', 'Membre du public'),
+('Federal Aviation Administration', 'Gouvernement'),
+('Charles Prentiss', 'Membre du public');
