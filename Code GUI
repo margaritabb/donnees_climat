@@ -1,0 +1,62 @@
+import tkinter as tk
+import pyodbc
+
+# Connection à la base de données
+server = 'localhost'
+database = 'entite'
+username = 'votre_nom_utilisateur'
+password = 'votre_mot_de_passe'
+cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
+
+# Création de la fenêtre
+window = tk.Tk()
+window.title("Application de base de données")
+
+# Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+def execute_query(query):
+    cursor = cnxn.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+    result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+# Fonction pour exécuter la première requête
+def query1():
+    query = """
+    SELECT c.Nom, COUNT(DISTINCT a.flight_nbr) AS NombreEntites, STRING_AGG(e.flight_nbr, ',') AS NumerosEntites
+    FROM Client c
+    LEFT JOIN Adoption a ON c.IdClient = a.IdClient
+    LEFT JOIN EntiteMobile e ON a.flight_nbr = e.flight_nbr
+    LEFT JOIN Climat cl ON e.flight_nbr = cl.flight_nbr
+    GROUP BY c.Nom;
+    """
+    execute_query(query)
+
+# Fonction pour exécuter la deuxième requête
+def query2():
+    query = """
+    SELECT c.Nom, em.flight_nbr, cl.windspeed
+    FROM Client c
+    INNER JOIN Adoption a ON c.IdClient = a.IdClient
+    INNER JOIN EntiteMobile em ON a.flight_nbr = em.flight_nbr
+    INNER JOIN Climat cl ON em.flight_nbr = cl.flight_nbr
+    INNER JOIN Position p ON cl.flight_nbr = p.flight_nbr AND cl.request_datetime = p.flight_time
+    WHERE cl.windspeed > 40;
+    """
+    execute_query(query)
+
+# Création des widgets
+query1_button = tk.Button(window, text="Requête 1", command=query1)
+query2_button = tk.Button(window, text="Requête 2", command=query2)
+result_text = tk.Text(window)
+
+# Placement des widgets
+query1_button.pack(pady=10)
+query2_button.pack(pady=10)
+result_text.pack(pady=10)
+
+# Lancement de la boucle principale
+window.mainloop()
+
+# Fermeture de la connexion à la base de données
+cnxn.close()
