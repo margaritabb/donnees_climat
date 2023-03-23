@@ -80,3 +80,31 @@ Idées de requêtes:
   WHERE Climat.windspeed < 20;`
   
 **- creer un trigger (par exemple: lorsqu'on met un jour un vol, il faut que le numero de vol commence par AC)**
+`
+CREATE OR ALTER TRIGGER vol_ac ON EntiteMobile 
+AFTER INSERT, UPDATE 
+AS
+  BEGIN
+
+    DECLARE @flight_nbr VARCHAR(10), @flight_origin VARCHAR(10), @flight_destin VARCHAR(10);
+
+    DECLARE vol_curseur CURSOR FOR
+        SELECT flight_nbr, flight_origin, flight_destin
+        FROM INSERTED;
+    
+    OPEN vol_curseur
+        FETCH NEXT FROM vol_curseur INTO @flight_nbr, @flight_origin, @flight_destin
+        WHILE @@FETCH_STATUS = 0
+            BEGIN
+            IF (@flight_nbr LIKE 'AC%')
+                INSERT INTO EntiteMobile(flight_nbr, flight_origin, flight_destin)
+                VALUES(@flight_nbr, @flight_origin, @flight_destin);
+            ELSE
+                PRINT 'Numero de vol doit commencer avec AC';
+                ROLLBACK TRANSACTION;
+            FETCH NEXT FROM vol_curseur INTO @flight_nbr, @flight_origin, @flight_destin;
+            END;
+    CLOSE vol_curseur;
+    DEALLOCATE vol_curseur;
+  END
+  `
