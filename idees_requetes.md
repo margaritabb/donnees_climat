@@ -56,7 +56,35 @@ Idées de requêtes:
   INNER JOIN Position p ON c.flight_nbr = p.flight_nbr 
                          AND c.request_datetime = p.flight_time`
 
-- historique des positions, avec/sans climat
+**- fonction qui prend le flight_nbr et un choix de données historiques ou dernière position seulement**
+
+`GO
+CREATE OR ALTER FUNCTION choix_position (@flight_nbr varchar(10), @choix varchar(10))
+RETURNS @choix_position 
+TABLE (flight_nbr VARCHAR(10),
+    flight_time INT,
+    latitude FLOAT(30),	
+    longitude FLOAT(30))
+AS 
+BEGIN
+    IF (@choix = 'historique')
+    BEGIN
+        INSERT @choix_position
+            SELECT * FROM Position
+            WHERE flight_nbr = @flight_nbr;
+    END;
+    ELSE IF (@choix = 'derniere')
+    BEGIN
+        INSERT @choix_position
+            SELECT * FROM Position
+            WHERE flight_nbr = @flight_nbr AND
+            flight_time = (SELECT MAX(flight_time) FROM Position WHERE flight_nbr = @flight_nbr)
+    END;
+    RETURN;
+END;
+GO
+`
+
 - climat infos simples vs détaillées
 - si entité n'existe pas, afficher un message d'erreur
 
