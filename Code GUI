@@ -1,16 +1,93 @@
+from tkinter import *
 import tkinter as tk
 import pyodbc
 
 # Connection à la base de données
-server = 'localhost'
+server = 'LAPTOP-D2C9FRM5'
 database = 'entite'
-username = 'votre_nom_utilisateur'
-password = 'votre_mot_de_passe'
-cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+ password)
+
+cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database)
 
 # Création de la fenêtre
 window = tk.Tk()
 window.title("Application de base de données")
+
+def show_result():
+    # Récupérer le nom du client entré dans l'Entry
+    nom_client = entry_nom_client.get()
+
+    # Exécuter la requête
+    cursor = cnxn.cursor()
+    # Exécution de la requête
+    cursor.execute("SELECT COUNT(*) FROM EntiteMobile em JOIN Adoption a ON em.flight_nbr=a.flight_nbr JOIN Client c "
+                   "ON a.IdClient=c.IdClient WHERE c.Nom = ?", (nom_client,))
+    result = cursor.fetchone()
+
+    result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+
+    # Affichage du message
+    if result[0] == 0:
+        result_text.insert(tk.END, "Le client ne possède aucune entité, il n'a pas accès aux données")
+    else:
+        result_text.insert(tk.END, "Le client a accès aux données")
+
+
+# Requete 1: vitesse du vent moyenne
+def query1_new_window():
+    # Toplevel object which will
+    # be treated as a new window
+    newWindow = tk.Toplevel(window)
+
+    # sets the title of the
+    # Toplevel widget
+    newWindow.title("Vitesse du vent moyenne pour un vol")
+
+    # sets the geometry of toplevel
+    newWindow.geometry("200x200")
+
+    # nom_client = ent_client.get()
+    flight_nbr = ent_flight.get()
+
+    query = """SELECT flight_nbr,
+            AVG(windspeed) AS avg_windspeed 
+            FROM Climat  
+            WHERE flight_nbr = '""" + flight_nbr + """'
+            GROUP BY flight_nbr;"""
+
+    r_set = cnxn.execute(query)
+
+    # Print as a grid in the new window
+    i = 0
+    for ligne in r_set:
+        for j in range(len(ligne)):
+            e = tk.Entry(newWindow, width=10, fg='blue')
+            e.grid(row=i, column=j)
+            e.insert(tk.END, ligne[j])
+        i = i + 1
+
+def choix_position(flight_nbr, choix):
+    cursor = cnxn.cursor()
+    cursor.execute("CREATE OR ALTER FUNCTION choix_position (@flight_nbr varchar(10), @choix varchar(10)) "
+                   "RETURNS @choix_position TABLE (flight_nbr VARCHAR(10), flight_time INT, latitude FLOAT(30), "
+                   "longitude FLOAT(30)) AS BEGIN IF (@choix = 'historique') BEGIN INSERT @choix_position "
+                   "SELECT * FROM Position WHERE flight_nbr = @flight_nbr; END; ELSE IF (@choix = 'derniere') "
+                   "BEGIN INSERT @choix_position SELECT * FROM Position WHERE flight_nbr = @flight_nbr "
+                   "AND flight_time = (SELECT MAX(flight_time) FROM Position WHERE flight_nbr = @flight_nbr) END; "
+                   "RETURN; END;")
+    cursor.execute("SELECT * FROM choix_position(?, ?)", (flight_nbr, choix))
+    results = cursor.fetchall()
+    cursor.close()
+    return results
+
+
+def get_results():
+    flight_nbr = entry_flight_nbr.get()
+    choix = entry_choix.get()
+    results = choix_position(flight_nbr, choix)
+    for result in results:
+        result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+        result_text.insert(tk.END, result)
+        result_text.insert(tk.END, "\n")
 
 # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
 def execute_query(query):
@@ -45,15 +122,108 @@ def query2():
     """
     execute_query(query)
 
+def query3():
+    query = """
+    SELECT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, SUM(CASE WHEN Climat.windspeed > 20 THEN 1 ELSE 0 END) AS TotalClients
+    FROM EntiteMobile 
+    INNER JOIN Adoption ON EntiteMobile.flight_nbr = Adoption.flight_nbr 
+    INNER JOIN Client ON Adoption.IdClient = Client.IdClient 
+    INNER JOIN Position ON EntiteMobile.flight_nbr = Position.flight_nbr 
+    INNER JOIN Climat ON Position.flight_nbr = Climat.flight_nbr AND Position.flight_time = Climat.request_datetime 
+    GROUP BY EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin;
+    """
+    execute_query(query)
+
+def query4():
+    query = """
+    SELECT DISTINCT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, Climat.windspeed
+    FROM EntiteMobile 
+    INNER JOIN Position ON EntiteMobile.flight_nbr = Position.flight_nbr 
+    INNER JOIN Climat ON Position.flight_nbr = Climat.flight_nbr AND Position.flight_time = Climat.request_datetime 
+    WHERE Climat.windspeed < 20;
+    """
+    execute_query(query)
+
+def query5():
+    query = """
+    SELECT c.*
+    FROM Climat c 
+    INNER JOIN (
+      SELECT flight_nbr, MAX(flight_time) AS max_date 
+      FROM Position 
+      GROUP BY flight_nbr
+    ) AS latest_position ON c.flight_nbr = latest_position.flight_nbr 
+                         AND c.request_datetime = latest_position.max_date
+    INNER JOIN Position p ON c.flight_nbr = p.flight_nbr 
+                         AND c.request_datetime = p.flight_time
+    """
+    execute_query(query)
+
+
+# Entrée du vol:
+flight_entry = tk.Frame(master=window)
+lbl_flight = tk.Label(master=flight_entry, text="Numéro de vol:")
+ent_flight = tk.Entry(master=flight_entry, width=10)
+
 # Création des widgets
-query1_button = tk.Button(window, text="Requête 1", command=query1)
-query2_button = tk.Button(window, text="Requête 2", command=query2)
-result_text = tk.Text(window)
+query1_button = tk.Button(window, text="Vitesse moyenne du vent lors du vol", command=query1_new_window)
 
 # Placement des widgets
+lbl_flight.pack(pady=5)
+ent_flight.pack(side=tk.LEFT)
+
+flight_entry.pack(pady=5)
+
 query1_button.pack(pady=10)
-query2_button.pack(pady=10)
-result_text.pack(pady=10)
+
+#Création d'un cadre
+frame = tk.Frame(window, borderwidth=2, relief='groove')
+frame.pack(side=LEFT, anchor=NW)
+frame2 = tk.Frame(window, borderwidth=2, relief='groove')
+frame2.pack(side=BOTTOM, anchor=SW)
+
+# Créer le label et l'entry pour le nom du client
+label_nom_client = tk.Label(frame2, text="Nom du client:")
+label_nom_client.grid(row=0, column=0)
+entry_nom_client = tk.Entry(frame2)
+entry_nom_client.grid(row=0, column=1)
+
+# Créer le bouton pour exécuter la requête
+button_show_result = tk.Button(frame2, text="Afficher le résultat", command=show_result)
+button_show_result.grid(row=0, column=2)
+
+# Créer la liste pour afficher le résultat
+# listbox_result = tk.Listbox(window)
+# listbox_result.grid(row=1, column=0, columnspan=3)
+
+# Création des widgets
+tk.Button(frame, text="Clients et leur entités", command=query1).grid(row=1, column=0, padx=10, pady=10)
+tk.Button(frame, text="Entités qui passent par un climat venteux", command=query2).grid(row=1, column=1, padx=10, pady=10)
+tk.Button(frame, text="Nombre de clients pour les entités qui passent par un climat désertique", command=query3).grid(row=2, column=0, padx=10, pady=10)
+tk.Button(frame, text="Entités qui passent par un climat désertique", command=query4).grid(row=2, column=1, padx=10, pady=10)
+tk.Button(frame, text="Dernière position disponible pour le vol et son climat", command=query5).grid(row=3, column=0, padx=10, pady=10)
+tk.Label(frame, text="Numéro de vol").grid(row=3, column=1)
+entry_flight_nbr = tk.Entry(frame)
+entry_flight_nbr.grid(row=4, column=1)
+tk.Label(frame, text="Choice").grid(row=5, column=1)
+entry_choix = tk.Entry(frame)
+entry_choix.grid(row=6, column=1)
+tk.Button(frame, text="Résultat", command=get_results).grid(row=7, column=1)
+result_text = tk.Text(window)
+
+
+
+
+
+# Placement des widgets
+# button_get_results.pack()
+# query1_button.pack(pady=10)
+# query2_button.pack(pady=10)
+# query3_button.pack(pady=10)
+# query4_button.pack(pady=10)
+# query5_button.pack(pady=10)
+result_text.pack()
+
 
 # Lancement de la boucle principale
 window.mainloop()
