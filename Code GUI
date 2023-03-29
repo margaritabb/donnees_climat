@@ -34,58 +34,73 @@ def show_result():
 
 # Requete 1: vitesse du vent moyenne
 def query1_new_window():
+     
     # Toplevel object which will
     # be treated as a new window
     newWindow = tk.Toplevel(window)
-
+ 
     # sets the title of the
     # Toplevel widget
-    newWindow.title("Vitesse du vent moyenne pour un vol")
-
+    newWindow.title("Conditions météorologiques du vol")
+ 
     # sets the geometry of toplevel
-    newWindow.geometry("200x200")
-
-    # nom_client = ent_client.get()
+    newWindow.geometry("430x60")
+    
+    #nom_client = ent_client.get()
     flight_nbr = ent_flight.get()
-
+    
     query = """SELECT flight_nbr,
-            AVG(windspeed) AS avg_windspeed 
+            ROUND(AVG(windspeed), 2) AS avg_windspd,
+            ROUND(AVG(precip), 2) AS avg_precip,
+            ROUND(AVG(visibility), 2) AS avg_visib
             FROM Climat  
-            WHERE flight_nbr = '""" + flight_nbr + """'
+            WHERE flight_nbr = '""" + flight_nbr +"""'
             GROUP BY flight_nbr;"""
-
+            
     r_set = cnxn.execute(query)
-
+    
     # Print as a grid in the new window
     i = 0
-    for ligne in r_set:
+    
+    e = tk.Entry(newWindow, width=5, fg='blue') 
+    e.grid(row=0, column=0) 
+    e.insert(tk.END, "# Vol")
+    
+    e = tk.Entry(newWindow, width=12, fg='blue') 
+    e.grid(row=0, column=1) 
+    e.insert(tk.END, "Moyenne vitesse vent")
+    
+    e = tk.Entry(newWindow, width=12, fg='blue') 
+    e.grid(row=0, column=2) 
+    e.insert(tk.END, "Moyenne précipit")
+
+
+    e = tk.Entry(newWindow, width=12, fg='blue') 
+    e.grid(row=0, column=3) 
+    e.insert(tk.END, "Moyenne visibilité")
+
+    
+    i=1 
+    for ligne in r_set: 
         for j in range(len(ligne)):
-            e = tk.Entry(newWindow, width=10, fg='blue')
-            e.grid(row=i, column=j)
+            e = tk.Entry(newWindow, width=5, fg='blue') 
+            e.grid(row=i, column=j) 
             e.insert(tk.END, ligne[j])
-        i = i + 1
+        i=i+1
 
 def choix_position(flight_nbr, choix):
     cursor = cnxn.cursor()
-    cursor.execute("CREATE OR ALTER FUNCTION choix_position (@flight_nbr varchar(10), @choix varchar(10)) "
-                   "RETURNS @choix_position TABLE (flight_nbr VARCHAR(10), flight_time INT, latitude FLOAT(30), "
-                   "longitude FLOAT(30)) AS BEGIN IF (@choix = 'historique') BEGIN INSERT @choix_position "
-                   "SELECT * FROM Position WHERE flight_nbr = @flight_nbr; END; ELSE IF (@choix = 'derniere') "
-                   "BEGIN INSERT @choix_position SELECT * FROM Position WHERE flight_nbr = @flight_nbr "
-                   "AND flight_time = (SELECT MAX(flight_time) FROM Position WHERE flight_nbr = @flight_nbr) END; "
-                   "RETURN; END;")
     cursor.execute("SELECT * FROM choix_position(?, ?)", (flight_nbr, choix))
     results = cursor.fetchall()
     cursor.close()
     return results
 
-
 def get_results():
     flight_nbr = entry_flight_nbr.get()
     choix = entry_choix.get()
     results = choix_position(flight_nbr, choix)
+    result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
     for result in results:
-        result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
         result_text.insert(tk.END, result)
         result_text.insert(tk.END, "\n")
 
@@ -100,7 +115,8 @@ def execute_query(query):
 # Fonction pour exécuter la première requête
 def query1():
     query = """
-    SELECT c.Nom, COUNT(DISTINCT a.flight_nbr) AS NombreEntites, STRING_AGG(e.flight_nbr, ',') AS NumerosEntites
+    SELECT c.Nom, COUNT(DISTINCT a.flight_nbr) AS NombreEntites, 
+    STRING_AGG(e.flight_nbr, ',') AS NumerosEntites
     FROM Client c
     LEFT JOIN Adoption a ON c.IdClient = a.IdClient
     LEFT JOIN EntiteMobile e ON a.flight_nbr = e.flight_nbr
@@ -166,7 +182,7 @@ lbl_flight = tk.Label(master=flight_entry, text="Numéro de vol:")
 ent_flight = tk.Entry(master=flight_entry, width=10)
 
 # Création des widgets
-query1_button = tk.Button(window, text="Vitesse moyenne du vent lors du vol", command=query1_new_window)
+query1_button = tk.Button(window, text="Conditions météorologiques", command=query1_new_window)
 
 # Placement des widgets
 lbl_flight.pack(pady=5)
@@ -178,9 +194,9 @@ query1_button.pack(pady=10)
 
 #Création d'un cadre
 frame = tk.Frame(window, borderwidth=2, relief='groove')
-frame.pack(side=LEFT, anchor=NW)
+frame.pack(side=tk.LEFT, anchor=tk.NW)
 frame2 = tk.Frame(window, borderwidth=2, relief='groove')
-frame2.pack(side=BOTTOM, anchor=SW)
+frame2.pack(side=tk.BOTTOM, anchor=tk.SW)
 
 # Créer le label et l'entry pour le nom du client
 label_nom_client = tk.Label(frame2, text="Nom du client:")
