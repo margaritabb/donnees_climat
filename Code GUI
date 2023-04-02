@@ -259,7 +259,7 @@ class Some_Widgets(GUI):  # inherits from the GUI class
             # Affichage du message
             if result[0] == 0:
                 result_text.insert(tk.END, "Le client ne possède aucune entité, il n'a pas accès aux données")
-                MyApp.Quit_application(parent)
+                #MyApp.Quit_application(parent)
             else:
                 result_text.insert(tk.END, "Le client a accès aux données")
 
