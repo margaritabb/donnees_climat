@@ -453,20 +453,6 @@ class PageFour(GUI):
 
         def choix_position(flight_nbr, choix):
             cursor = cnxn.cursor()
-            cursor.execute("CREATE OR ALTER FUNCTION choix_position (@flight_nbr varchar(10), @choix varchar(10)) "
-                           "RETURNS @choix_position TABLE (flight_nbr VARCHAR(10), flight_time INT, latitude FLOAT(30), "
-                           "longitude FLOAT(30)) "
-                           "AS BEGIN IF (@choix = 'historique') "
-                           "BEGIN INSERT @choix_position "
-                           "SELECT * FROM Position WHERE flight_nbr = @flight_nbr; "
-                           "END; "
-                           "ELSE IF (@choix = 'derniere') "
-                           "BEGIN INSERT @choix_position SELECT * FROM Position "
-                           "WHERE flight_nbr = @flight_nbr "
-                           "AND flight_time = (SELECT MAX(flight_time) "
-                           "FROM Position WHERE flight_nbr = @flight_nbr) END; "
-                           "RETURN; "
-                           "END;")
             cursor.execute("SELECT * FROM choix_position(?, ?)", (flight_nbr, choix))
             results = cursor.fetchall()
             cursor.close()
@@ -476,8 +462,8 @@ class PageFour(GUI):
             flight_nbr = entry_flight_nbr.get()
             choix = entry_choix.get()
             results = choix_position(flight_nbr, choix)
+            result_text.delete('1.0', tk.END)
             for result in results:
-                result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
                 result_text.insert(tk.END, result)
                 result_text.insert(tk.END, "\n")
 
