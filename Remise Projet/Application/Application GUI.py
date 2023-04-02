@@ -1,0 +1,593 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+import pyodbc
+
+# Connection à la base de données
+server = 'LAPTOP-D2C9FRM5'
+database = 'entite'
+
+cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database)
+
+"""
+Useful Links:
+https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter Most useful in my opinion
+https://www.tutorialspoint.com/python/python_gui_programming.htm
+https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/index.html
+https://www.youtube.com/watch?v=HjNHATw6XgY&list=PLQVvvaa0QuDclKx-QpC9wntnURXVJqLyk
+"""
+
+frame_styles = {"relief": "groove",
+                "bd": 3, "bg": "#BEB2A7",
+                "fg": "#073bb3", "font": ("Arial", 9, "bold")}
+
+
+class LoginPage(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        main_frame = tk.Frame(self, bg="#708090", height=431, width=626)  # this is the background
+        main_frame.pack(fill="both", expand="true")
+
+        self.geometry("626x431")  # Sets window size to 626w x 431h pixels
+        self.resizable(0, 0)  # This prevents any resizing of the screen
+        title_styles = {"font": ("Trebuchet MS Bold", 16), "background": "blue"}
+
+        text_styles = {"font": ("Verdana", 14),
+                       "background": "blue",
+                       "foreground": "#E1FFFF"}
+
+        frame_login = tk.Frame(main_frame, bg="blue", relief="groove", bd=2)  # this is the frame that holds all the login details and buttons
+        frame_login.place(rely=0.30, relx=0.17, height=130, width=400)
+
+        label_title = tk.Label(frame_login, title_styles, text="Login Page")
+        label_title.grid(row=0, column=1, columnspan=1)
+
+        label_user = tk.Label(frame_login, text_styles, text="Username:")
+        label_user.grid(row=1, column=0)
+
+        label_pw = tk.Label(frame_login, text_styles, text="Password:")
+        label_pw.grid(row=2, column=0)
+
+        entry_user = ttk.Entry(frame_login, width=45, cursor="xterm")
+        entry_user.grid(row=1, column=1)
+
+        entry_pw = ttk.Entry(frame_login, width=45, cursor="xterm", show="*")
+        entry_pw.grid(row=2, column=1)
+
+        button = ttk.Button(frame_login, text="Login", command=lambda: getlogin())
+        button.place(rely=0.70, relx=0.50)
+
+        signup_btn = ttk.Button(frame_login, text="Register", command=lambda: get_signup())
+        signup_btn.place(rely=0.70, relx=0.75)
+
+        def get_signup():
+            SignupPage()
+
+        def getlogin():
+            username = entry_user.get()
+            password = entry_pw.get()
+            # if your want to run the script as it is set validation = True
+            validation = validate(username, password)
+            if True:
+                tk.messagebox.showinfo("Login Successful",
+                                       "Welcome {}".format(username))
+                root.deiconify()
+                top.destroy()
+            else:
+                tk.messagebox.showerror("Information", "The Username or Password you have entered are incorrect ")
+
+        def validate(username, password):
+            # Checks the text file for a username/password combination.
+            try:
+                with open("credentials.txt", "r") as credentials:
+                    for line in credentials:
+                        line = line.split(",")
+                        if line[1] == username and line[3] == password:
+                            return True
+                    return False
+            except FileNotFoundError:
+                print("You need to Register first or amend Line 71 to     if True:")
+                return False
+
+
+class SignupPage(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        main_frame = tk.Frame(self, bg="#3F6BAA", height=150, width=250)
+        # pack_propagate prevents the window resizing to match the widgets
+        main_frame.pack_propagate(0)
+        main_frame.pack(fill="both", expand="true")
+
+        self.geometry("250x150")
+        self.resizable(0, 0)
+
+        self.title("Registration")
+
+        text_styles = {"font": ("Verdana", 10),
+                       "background": "#3F6BAA",
+                       "foreground": "#E1FFFF"}
+
+        label_user = tk.Label(main_frame, text_styles, text="New Username:")
+        label_user.grid(row=1, column=0)
+
+        label_pw = tk.Label(main_frame, text_styles, text="New Password:")
+        label_pw.grid(row=2, column=0)
+
+        entry_user = ttk.Entry(main_frame, width=20, cursor="xterm")
+        entry_user.grid(row=1, column=1)
+
+        entry_pw = ttk.Entry(main_frame, width=20, cursor="xterm", show="*")
+        entry_pw.grid(row=2, column=1)
+
+        button = ttk.Button(main_frame, text="Create Account", command=lambda: signup())
+        button.grid(row=4, column=1)
+
+        def signup():
+            # Creates a text file with the Username and password
+            user = entry_user.get()
+            pw = entry_pw.get()
+            validation = validate_user(user)
+            if not validation:
+                tk.messagebox.showerror("Information", "That Username already exists")
+            else:
+                if len(pw) > 3:
+                    credentials = open("credentials.txt", "a")
+                    credentials.write(f"Username,{user},Password,{pw},\n")
+                    credentials.close()
+                    tk.messagebox.showinfo("Information", "Your account details have been stored.")
+                    SignupPage.destroy(self)
+
+                else:
+                    tk.messagebox.showerror("Information", "Your password needs to be longer than 3 values.")
+
+        def validate_user(username):
+            # Checks the text file for a username/password combination.
+            try:
+                with open("credentials.txt", "r") as credentials:
+                    for line in credentials:
+                        line = line.split(",")
+                        if line[1] == username:
+                            return False
+                return True
+            except FileNotFoundError:
+                return True
+
+class MenuBar(tk.Menu):
+    def __init__(self, parent):
+        tk.Menu.__init__(self, parent)
+
+        menu_file = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Accès Client", menu=menu_file)
+        menu_file.add_command(label="Accès aux données", command=lambda: parent.show_frame(Some_Widgets))
+        menu_file.add_separator()
+        menu_file.add_command(label="Quitter Application", command=lambda: parent.Quit_application())
+
+        menu_orders = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Requêtes", menu=menu_orders)
+
+        #menu_pricing = tk.Menu(self, tearoff=0)
+        #self.add_cascade(label="Requêtes 2", menu=menu_pricing)
+        menu_orders.add_command(label="Requêtes 1", command=lambda: parent.show_frame(PageOne))
+
+        menu_operations = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Infos vols", menu=menu_operations)
+        menu_orders.add_command(label="Requêtes 2", command=lambda: parent.show_frame(PageTwo))
+        #menu_positions = tk.Menu(menu_operations, tearoff=0)
+        #menu_operations.add_cascade(label="Infos vols", menu=menu_positions)
+        menu_operations.add_command(label="Ajouter un vol", command=lambda: parent.show_frame(PageThree))
+        menu_operations.add_command(label="Historique vol", command=lambda: parent.show_frame(PageFour))
+
+        menu_help = tk.Menu(self, tearoff=0)
+        self.add_cascade(label="Menu6", menu=menu_help)
+        menu_help.add_command(label="Open New Window", command=lambda: parent.show_frame(OpenNewWindow))
+
+
+class MyApp(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+
+        tk.Tk.__init__(self, *args, **kwargs)
+        main_frame = tk.Frame(self, bg="#84CEEB", height=600, width=1024)
+        main_frame.pack_propagate(0)
+        main_frame.pack(fill="both", expand="true")
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+        # self.resizable(0, 0) prevents the app from being resized
+        # self.geometry("1024x600") fixes the applications size
+        self.frames = {}
+        pages = (Some_Widgets, PageOne, PageTwo, PageThree, PageFour, OpenNewWindow)
+        for F in pages:
+            frame = F(main_frame, self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+        self.show_frame(Some_Widgets)
+        menubar = MenuBar(self)
+        tk.Tk.config(self, menu=menubar)
+
+    def show_frame(self, name):
+        frame = self.frames[name]
+        frame.tkraise()
+
+    # def OpenNewWindow(self):
+    #     OpenNewWindow()
+
+    def Quit_application(self):
+        self.destroy()
+
+
+class GUI(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.main_frame = tk.Frame(self, bg="#BEB2A7", height=600, width=1024)
+        # self.main_frame.pack_propagate(0)
+        self.main_frame.pack(fill="both", expand="true")
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+
+
+class Some_Widgets(GUI):  # inherits from the GUI class
+    def __init__(self, parent, controller):
+        GUI.__init__(self, parent)
+
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Nom du client")
+        frame1.place(rely=0.05, relx=0.02, height=50, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=50, width=550)
+
+        def show_result():
+            # Récupérer le nom du client entré dans l'Entry
+            nom_client = entry_nom_client.get()
+
+            # Exécuter la requête
+            cursor = cnxn.cursor()
+            # Exécution de la requête
+            cursor.execute(
+                "SELECT COUNT(*) FROM EntiteMobile em JOIN Adoption a ON em.flight_nbr=a.flight_nbr JOIN Client c "
+                "ON a.IdClient=c.IdClient WHERE c.Nom = ?", (nom_client,))
+            result = cursor.fetchone()
+
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+
+            # Affichage du message
+            if result[0] == 0:
+                result_text.insert(tk.END, "Le client ne possède aucune entité, il n'a pas accès aux données")
+                #MyApp.Quit_application(parent)
+            else:
+                result_text.insert(tk.END, "Le client a accès aux données")
+
+        # Créer le label et l'entry pour le nom du client
+        label_nom_client = tk.Label(frame1, text="Nom du client:")
+        label_nom_client.grid(row=0, column=0)
+        entry_nom_client = tk.Entry(frame1)
+        entry_nom_client.grid(row=0, column=1)
+
+        # Créer le bouton pour exécuter la requête
+        button_show_result = tk.Button(frame1, text="Afficher le résultat", command=show_result)
+        button_show_result.grid(row=0, column=2)
+
+
+class PageOne(GUI):
+    def __init__(self, parent, controller):
+        GUI.__init__(self, parent)
+
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Requêtes")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def execute_query(query):
+            cursor = cnxn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+        # Requete 1: vitesse du vent moyenne
+        def query1_new_window():
+            # Toplevel object which will
+            # be treated as a new window
+            newWindow = tk.Toplevel(self)
+
+            # sets the title of the
+            # Toplevel widget
+            newWindow.title("Vitesse du vent moyenne pour un vol")
+
+            # sets the geometry of toplevel
+            newWindow.geometry("200x200")
+
+            # nom_client = ent_client.get()
+            flight_nbr = ent_flight.get()
+
+            query = """SELECT flight_nbr,
+                    AVG(windspeed) AS avg_windspeed 
+                    FROM Climat  
+                    WHERE flight_nbr = '""" + flight_nbr + """'
+                    GROUP BY flight_nbr;"""
+
+            r_set = cnxn.execute(query)
+
+            # Print as a grid in the new window
+            i = 0
+            for ligne in r_set:
+                for j in range(len(ligne)):
+                    e = tk.Entry(newWindow, width=10, fg='blue')
+                    e.grid(row=i, column=j)
+                    e.insert(tk.END, ligne[j])
+                i = i + 1
+
+        # Fonction pour exécuter la première requête
+        def query1():
+            query = """
+            SELECT c.Nom, COUNT(DISTINCT a.flight_nbr) AS NombreEntites, STRING_AGG(e.flight_nbr, ',') AS NumerosEntites
+            FROM Client c
+            LEFT JOIN Adoption a ON c.IdClient = a.IdClient
+            LEFT JOIN EntiteMobile e ON a.flight_nbr = e.flight_nbr
+            LEFT JOIN Climat cl ON e.flight_nbr = cl.flight_nbr
+            GROUP BY c.Nom;
+            """
+            execute_query(query)
+
+        # Fonction pour exécuter la deuxième requête
+        def query2():
+            query = """
+            SELECT c.Nom, em.flight_nbr, cl.windspeed
+            FROM Client c
+            INNER JOIN Adoption a ON c.IdClient = a.IdClient
+            INNER JOIN EntiteMobile em ON a.flight_nbr = em.flight_nbr
+            INNER JOIN Climat cl ON em.flight_nbr = cl.flight_nbr
+            INNER JOIN Position p ON cl.flight_nbr = p.flight_nbr AND cl.request_datetime = p.flight_time
+            WHERE cl.windspeed > 40;
+            """
+            execute_query(query)
+
+        # Création des widgets
+        tk.Button(frame1, text="Clients et leur entités", command=query1).pack(pady=20)
+        tk.Button(frame1, text="Entités qui passent par un climat venteux", command=query2).pack(pady=20)
+        lbl_flight = tk.Label(frame1, text="Numéro de vol:")
+        ent_flight = tk.Entry(frame1, width=10)
+        query1_button = tk.Button(frame1, text="Vitesse moyenne du vent lors du vol", command=query1_new_window)
+
+        # Placement des widgets
+        lbl_flight.pack()
+        ent_flight.pack()
+        query1_button.pack()
+
+
+class PageThree(GUI):
+    def __init__(self, parent, controller):
+        GUI.__init__(self, parent)
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Déclencheur")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def execute_query(query):
+            cursor = cnxn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+        def query3():
+            query = """
+            SELECT * FROM EntiteMobile ORDER BY flight_nbr
+            """
+            execute_query(query)
+
+        # Fonction appelée lorsque l'utilisateur clique sur le bouton "Ajouter le vol"
+        def ajoute_vol():
+            # Récupération des informations saisies
+            vol_nbr = vol_nbr_entry.get()
+            vol_origin = vol_origin_entry.get()
+            vol_destin = vol_destin_entry.get()
+
+            # Vérification du numéro de vol
+            if not vol_nbr.startswith('AC'):
+                # Affichage d'un message d'erreur
+                # tk.messagebox.showerror("Erreur", "Le numéro de vol doit commencer par AC")
+                result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+                result_text.insert(tk.END, "Il est impossible d'ajouter le vol")
+                # Annulation de la transaction
+                cnxn.rollback()
+            else:
+                # Insertion des informations dans la base de données
+                cursor = cnxn.cursor()
+                cursor.execute("INSERT INTO EntiteMobile(flight_nbr, flight_origin, flight_destin) VALUES (?, ?, ?)",
+                               (vol_nbr, vol_origin, vol_destin))
+
+                cnxn.commit()
+                # Affichage d'un message de confirmation
+                # tk.messagebox.showinfo("Succès", "Le vol a été ajouté avec succès")
+                result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+                result_text.insert(tk.END, "Le vol a été ajouté avec succès")
+
+        #Placement
+        lbl_nbr_vol = tk.Label(frame1, text="Numéro de vol:")
+        lbl_nbr_vol.place(x=0, y=140)
+        vol_nbr_entry = tk.Entry(frame1)
+        vol_nbr_entry.place(x=100, y=140)
+        lbl_org_vol = tk.Label(frame1, text="Origine:")
+        lbl_org_vol.place(x=0, y=160)
+        vol_origin_entry = tk.Entry(frame1)
+        vol_origin_entry.place(x=100, y=160)
+        lbl_destin_vol = tk.Label(frame1, text="Destination:")
+        lbl_destin_vol.place(x=0, y=180)
+        vol_destin_entry = tk.Entry(frame1)
+        vol_destin_entry.place(x=100, y=180)
+        tk.Button(frame1, text="Ajouter", command=ajoute_vol).place(x=0, y=200)
+        tk.Button(frame1, text="Liste des vols", command=query3).place(x=0, y=300)
+
+
+
+
+
+
+class PageFour(GUI):
+    def __init__(self, parent, controller):
+        GUI.__init__(self, parent)
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Procédure")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        def choix_position(flight_nbr, choix):
+            cursor = cnxn.cursor()
+            cursor.execute("SELECT * FROM choix_position(?, ?)", (flight_nbr, choix))
+            results = cursor.fetchall()
+            cursor.close()
+            return results
+
+        def get_results():
+            flight_nbr = entry_flight_nbr.get()
+            choix = entry_choix.get()
+            results = choix_position(flight_nbr, choix)
+            result_text.delete('1.0', tk.END)
+            for result in results:
+                result_text.insert(tk.END, result)
+                result_text.insert(tk.END, "\n")
+
+        # Création des widgets et entrée du vol + placement
+        tk.Label(frame1, text="Numéro de vol").grid(row=3, column=1)
+        entry_flight_nbr = tk.Entry(frame1)
+        entry_flight_nbr.grid(row=4, column=1)
+        tk.Label(frame1, text="Choix").grid(row=5, column=1)
+        entry_choix = tk.Entry(frame1)
+        entry_choix.grid(row=6, column=1)
+        tk.Button(frame1, text="Résultat", command=get_results).grid(row=7, column=1)
+
+
+class PageTwo(GUI):
+    def __init__(self, parent, controller):
+        GUI.__init__(self, parent)
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Requêtes")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def execute_query(query):
+            cursor = cnxn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+        def query3():
+            query = """
+                    SELECT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, SUM(CASE WHEN Climat.windspeed > 20 THEN 1 ELSE 0 END) AS TotalClients
+                    FROM EntiteMobile 
+                    INNER JOIN Adoption ON EntiteMobile.flight_nbr = Adoption.flight_nbr 
+                    INNER JOIN Client ON Adoption.IdClient = Client.IdClient 
+                    INNER JOIN Position ON EntiteMobile.flight_nbr = Position.flight_nbr 
+                    INNER JOIN Climat ON Position.flight_nbr = Climat.flight_nbr AND Position.flight_time = Climat.request_datetime 
+                    GROUP BY EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin;
+                    """
+            execute_query(query)
+
+        def query4():
+            query = """
+                    SELECT DISTINCT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, Climat.windspeed
+                    FROM EntiteMobile 
+                    INNER JOIN Position ON EntiteMobile.flight_nbr = Position.flight_nbr 
+                    INNER JOIN Climat ON Position.flight_nbr = Climat.flight_nbr AND Position.flight_time = Climat.request_datetime 
+                    WHERE Climat.windspeed < 20;
+                    """
+            execute_query(query)
+
+        def query5():
+            query = """
+                    SELECT c.*
+                    FROM Climat c 
+                    INNER JOIN (
+                      SELECT flight_nbr, MAX(flight_time) AS max_date 
+                      FROM Position 
+                      GROUP BY flight_nbr
+                    ) AS latest_position ON c.flight_nbr = latest_position.flight_nbr 
+                                         AND c.request_datetime = latest_position.max_date
+                    INNER JOIN Position p ON c.flight_nbr = p.flight_nbr 
+                                         AND c.request_datetime = p.flight_time
+                    """
+            execute_query(query)
+
+        # Création des widgets et entrée du vol + placement
+        tk.Button(frame1, text="Nombre de positions pour les entités qui passent par un climat désertique", command=query3).grid(row=2, column=0, padx=10, pady=10)
+        tk.Button(frame1, text="Entités qui passent par un climat désertique", command=query4).grid(row=1, column=0, padx=10, pady=10)
+        tk.Button(frame1, text="Dernière position disponible pour le vol et son climat", command=query5).grid(row=3, column=0, padx=10, pady=10)
+
+
+class OpenNewWindow(GUI):
+
+    def __init__(self, parent, controller):
+
+        GUI.__init__(self, parent)
+
+
+        frame1 = tk.LabelFrame(self, frame_styles, text="Requêtes")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def afficher_type_client():
+            cursor = cnxn.cursor()
+
+            # Exécution de la procédure stockée
+            cursor.execute("EXECUTE afficher_type_client")
+
+            # Récupération des résultats
+            rows = cursor.fetchall()
+
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            # Insérer les résultats dans la zone de texte ligne par ligne
+            while cursor.nextset():
+                row = cursor.fetchone()
+                if row:
+                    result_text.insert(tk.END, str(row[0]) + '\n')
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def execute_query(query):
+            cursor = cnxn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+        def query6():
+            query = """
+                    SELECT * FROM Client
+                    """
+            execute_query(query)
+
+
+
+        # Création des widgets et entrée du vol + placement
+        tk.Button(frame1, text="Curseur type client", command=afficher_type_client).grid(row=2, column=0, padx=10, pady=10)
+        tk.Button(frame1, text="Table clients", command=query6).grid(row=5, column=0, padx=10, pady=10)
+
+
+top = LoginPage()
+top.title("Application Entité Mobile - Connexion")
+root = MyApp()
+root.withdraw()
+root.title("Application Entité Mobile")
+
+root.mainloop()
