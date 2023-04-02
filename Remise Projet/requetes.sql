@@ -107,6 +107,9 @@
    END;
    GO
 
+-- On teste la fonction
+SELECT * FROM choix_position('AC120', 'historique');
+SELECT * FROM choix_position('AC120', 'derniere');
 
    go
 --Lorsqu'on ajoute ou modifie un vol, il faut que le nom du vol commence par «AC» (Trigger)
@@ -127,6 +130,16 @@
        END
    END
   
+go
+
+-- on teste le trigger
+go
+INSERT INTO EntiteMobile (flight_nbr, flight_origin, flight_destin) VALUES
+('ZZ777', 'YYZ', 'ICN');
+go
+go
+INSERT INTO EntiteMobile (flight_nbr, flight_origin, flight_destin) VALUES
+('AC646', 'YUL', 'SEA');
 go
 
 
