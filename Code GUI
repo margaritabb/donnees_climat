@@ -540,8 +540,48 @@ class OpenNewWindow(GUI):
         GUI.__init__(self, parent)
 
 
-        label1 = tk.Label(self.main_frame, font=("Verdana", 20), text="OpenNewWindow Page")
-        label1.pack(side="top")
+        frame1 = tk.LabelFrame(self, frame_styles, text="Requêtes")
+        frame1.place(rely=0.05, relx=0.02, height=500, width=400)
+
+        result_text = tk.Text(self)
+        result_text.place(rely=0.05, relx=0.45, height=500, width=550)
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def afficher_type_client():
+            cursor = cnxn.cursor()
+
+            # Exécution de la procédure stockée
+            cursor.execute("EXECUTE afficher_type_client")
+
+            # Récupération des résultats
+            rows = cursor.fetchall()
+
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            # Insérer les résultats dans la zone de texte ligne par ligne
+            while cursor.nextset():
+                row = cursor.fetchone()
+                if row:
+                    result_text.insert(tk.END, str(row[0]) + '\n')
+
+        # Fonction pour exécuter une requête et afficher les résultats dans une zone de texte
+        def execute_query(query):
+            cursor = cnxn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
+            result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+
+        def query6():
+            query = """
+                    SELECT * FROM Client
+                    """
+            execute_query(query)
+
+
+
+        # Création des widgets et entrée du vol + placement
+        tk.Button(frame1, text="Curseur type client", command=afficher_type_client).grid(row=2, column=0, padx=10, pady=10)
+        tk.Button(frame1, text="Table clients", command=query6).grid(row=5, column=0, padx=10, pady=10)
 
 
 top = LoginPage()
