@@ -262,6 +262,7 @@ class Some_Widgets(GUI):  # inherits from the GUI class
                 #MyApp.Quit_application(parent)
             else:
                 result_text.insert(tk.END, "Le client a accès aux données")
+            cursor.close()
 
         # Créer le label et l'entry pour le nom du client
         label_nom_client = tk.Label(frame1, text="Nom du client:")
@@ -292,6 +293,7 @@ class PageOne(GUI):
             rows = cursor.fetchall()
             result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
             result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+            cursor.close()
 
         # Requete 1: vitesse du vent moyenne
         def query1_new_window():
@@ -381,6 +383,7 @@ class PageThree(GUI):
             rows = cursor.fetchall()
             result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
             result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+            cursor.close()
 
         def query3():
             query = """
@@ -414,6 +417,7 @@ class PageThree(GUI):
                 # tk.messagebox.showinfo("Succès", "Le vol a été ajouté avec succès")
                 result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
                 result_text.insert(tk.END, "Le vol a été ajouté avec succès")
+                cursor.close()
 
         #Placement
         lbl_nbr_vol = tk.Label(frame1, text="Numéro de vol:")
@@ -452,7 +456,7 @@ class PageFour(GUI):
             results = cursor.fetchall()
             cursor.close()
             return results
-
+ 
         def get_results():
             flight_nbr = entry_flight_nbr.get()
             choix = entry_choix.get()
@@ -489,6 +493,7 @@ class PageTwo(GUI):
             rows = cursor.fetchall()
             result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
             result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+            cursor.close()
 
         def query3():
             query = """
@@ -570,6 +575,7 @@ class OpenNewWindow(GUI):
             rows = cursor.fetchall()
             result_text.delete('1.0', tk.END)  # Effacer le contenu précédent de la zone de texte
             result_text.insert(tk.END, '\n'.join([str(row) for row in rows]))
+            cursor.close()
 
         def query6():
             query = """
