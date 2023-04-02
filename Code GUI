@@ -17,7 +17,6 @@ https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/index.html
 https://www.youtube.com/watch?v=HjNHATw6XgY&list=PLQVvvaa0QuDclKx-QpC9wntnURXVJqLyk
 """
 
-
 frame_styles = {"relief": "groove",
                 "bd": 3, "bg": "#BEB2A7",
                 "fg": "#073bb3", "font": ("Arial", 9, "bold")}
@@ -164,25 +163,25 @@ class MenuBar(tk.Menu):
         tk.Menu.__init__(self, parent)
 
         menu_file = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Menu1", menu=menu_file)
-        menu_file.add_command(label="All Widgets", command=lambda: parent.show_frame(Some_Widgets))
+        self.add_cascade(label="Accès Client", menu=menu_file)
+        menu_file.add_command(label="Accès aux données", command=lambda: parent.show_frame(Some_Widgets))
         menu_file.add_separator()
-        menu_file.add_command(label="Exit Application", command=lambda: parent.Quit_application())
+        menu_file.add_command(label="Quitter Application", command=lambda: parent.Quit_application())
 
         menu_orders = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Menu2", menu=menu_orders)
+        self.add_cascade(label="Requêtes", menu=menu_orders)
 
-        menu_pricing = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Menu3", menu=menu_pricing)
-        menu_pricing.add_command(label="Page One", command=lambda: parent.show_frame(PageOne))
+        #menu_pricing = tk.Menu(self, tearoff=0)
+        #self.add_cascade(label="Requêtes 2", menu=menu_pricing)
+        menu_orders.add_command(label="Requêtes 1", command=lambda: parent.show_frame(PageOne))
 
         menu_operations = tk.Menu(self, tearoff=0)
-        self.add_cascade(label="Menu4", menu=menu_operations)
-        menu_orders.add_command(label="Page Two", command=lambda: parent.show_frame(PageTwo))
-        menu_positions = tk.Menu(menu_operations, tearoff=0)
-        menu_operations.add_cascade(label="Menu5", menu=menu_positions)
-        menu_positions.add_command(label="Page Three", command=lambda: parent.show_frame(PageThree))
-        menu_positions.add_command(label="Page Four", command=lambda: parent.show_frame(PageFour))
+        self.add_cascade(label="Infos vols", menu=menu_operations)
+        menu_orders.add_command(label="Requêtes 2", command=lambda: parent.show_frame(PageTwo))
+        #menu_positions = tk.Menu(menu_operations, tearoff=0)
+        #menu_operations.add_cascade(label="Infos vols", menu=menu_positions)
+        menu_operations.add_command(label="Ajouter un vol", command=lambda: parent.show_frame(PageThree))
+        menu_operations.add_command(label="Historique vol", command=lambda: parent.show_frame(PageFour))
 
         menu_help = tk.Menu(self, tearoff=0)
         self.add_cascade(label="Menu6", menu=menu_help)
@@ -546,9 +545,9 @@ class OpenNewWindow(GUI):
 
 
 top = LoginPage()
-top.title("Tkinter App Template - Login Page")
+top.title("Application Entité Mobile - Connexion")
 root = MyApp()
 root.withdraw()
-root.title("Tkinter App Template")
+root.title("Application Entité Mobile")
 
 root.mainloop()
