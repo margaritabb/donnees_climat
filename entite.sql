@@ -540,14 +540,6 @@ INSERT INTO Adoption(flight_nbr, IdClient) VALUES
   INNER JOIN Position p ON cl.flight_nbr = p.flight_nbr AND cl.request_datetime = p.flight_time
   WHERE cl.windspeed > 40;
 
--- somme des clients pour chaque entité qui ne passe pas par un climat tropical
-  SELECT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, SUM(CASE WHEN Climat.windspeed > 20 THEN 1 ELSE 0 END) AS TotalClients
-  FROM EntiteMobile 
-  INNER JOIN Adoption ON EntiteMobile.flight_nbr = Adoption.flight_nbr 
-  INNER JOIN Client ON Adoption.IdClient = Client.IdClient 
-  INNER JOIN Position ON EntiteMobile.flight_nbr = Position.flight_nbr 
-  INNER JOIN Climat ON Position.flight_nbr = Climat.flight_nbr AND Position.flight_time = Climat.request_datetime 
-  GROUP BY EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin;
 
 -- noms des entités qui traversent un climat dont le windspeed est infrieur à 20
   SELECT DISTINCT EntiteMobile.flight_nbr, EntiteMobile.flight_origin, EntiteMobile.flight_destin, Climat.windspeed
@@ -636,36 +628,38 @@ INSERT INTO Adoption(flight_nbr, IdClient) VALUES
 	END;
 	GO
 
+	go
 --Lorsqu'on ajoute ou modifie un vol, il faut que le nom du vol commence par «AC» (Trigger)
-	CREATE OR ALTER TRIGGER vol_ac ON EntiteMobile 
-	AFTER INSERT, UPDATE 
-	AS
-	BEGIN
-
-	DECLARE @flight_nbr VARCHAR(10), @flight_origin VARCHAR(10), @flight_destin VARCHAR(10);
-
-	DECLARE vol_curseur CURSOR FOR
-		SELECT flight_nbr, flight_origin, flight_destin
-		FROM INSERTED;
+	CREATE TRIGGER tr_add_new_flight
+	ON EntiteMobile
+		FOR INSERT
+		AS
+		BEGIN
+		DECLARE @flight_nbr VARCHAR(10)
+		SELECT @flight_nbr = flight_nbr 
+		FROM INSERTED
     
-	OPEN vol_curseur
-		FETCH NEXT FROM vol_curseur INTO @flight_nbr, @flight_origin, @flight_destin
-		WHILE @@FETCH_STATUS = 0
-			BEGIN
-			IF (@flight_nbr LIKE 'AC%')
-				INSERT INTO EntiteMobile(flight_nbr, flight_origin, flight_destin)
-				VALUES(@flight_nbr, @flight_origin, @flight_destin);
-			ELSE
-				PRINT 'Numero de vol doit commencer avec AC';
-				ROLLBACK TRANSACTION;
-			FETCH NEXT FROM vol_curseur INTO @flight_nbr, @flight_origin, @flight_destin;
-			END;
-	CLOSE vol_curseur;
-	DEALLOCATE vol_curseur;
+		IF LEFT(@flight_nbr, 2) != 'AC'
+		BEGIN
+			PRINT 'Le numéro de vol doit commencer par AC';
+			ROLLBACK TRANSACTION
+			RETURN
+		END
 	END
+
 	
 go
 
+go
+INSERT INTO EntiteMobile (flight_nbr, flight_origin, flight_destin) VALUES
+('DC777', 'YYZ', 'ICN');
+go
+go
+INSERT INTO EntiteMobile (flight_nbr, flight_origin, flight_destin) VALUES
+('AC666', 'YUL', 'SEA');
+go
+
+go
 --Curseur qui permet d'afficher le type de client
 CREATE OR ALTER PROCEDURE afficher_type_client
 AS
@@ -713,3 +707,6 @@ GO
 
 -- On teste notre procédure
 EXEC afficher_type_client;
+
+
+SELECT * FROM EntiteMobile ORDER BY flight_nbr
